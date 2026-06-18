@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unsaid</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="config.js"></script>
+    <style>
+      html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.5s ease-out; }
+    @keyframes pulse-dot { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+    .dot-pulse { animation: pulse-dot 1.2s ease-in-out infinite; }
+    .dot-pulse:nth-child(2) { animation-delay: 0.2s; }
+    .dot-pulse:nth-child(3) { animation-delay: 0.4s; }
+  </style>
+</head>
+<body class="bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors duration-300 min-h-screen flex flex-col">
+
+  <!-- Dark mode toggle -->
+  <button id="themeToggle" class="fixed top-4 right-4 z-50 w-9 h-9 rounded-full bg-white/80 dark:bg-stone-800/80 backdrop-blur border border-stone-200 dark:border-stone-700 flex items-center justify-center text-sm hover:bg-stone-100 dark:hover:bg-stone-700 transition-all opacity-70 hover:opacity-100" aria-label="Toggle dark mode">
+    <span class="dark:hidden">&#9790;</span>
+    <span class="hidden dark:inline">&#9788;</span>
+  </button>
+
+  <!-- Header -->
+  <header class="pt-16 sm:pt-24 pb-8 px-4 text-center">
+    <h1 class="text-4xl sm:text-5xl font-light tracking-tight text-stone-800 dark:text-stone-200">unsaid</h1>
+    <p class="mt-3 text-sm sm:text-base text-stone-500 dark:text-stone-400 max-w-md mx-auto leading-relaxed">
+      Everything you couldn't say — now you can. Ask anything. No judgment. No trace.
+    </p>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-1 px-4 pb-24 max-w-xl mx-auto w-full">
+    <form id="askForm" class="space-y-4">
+      <div class="relative">
+        <textarea
+          id="questionInput"
+          rows="4"
+          placeholder="What's on your mind that you can't say anywhere else?"
+          class="w-full resize-none rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 px-5 py-4 text-sm sm:text-base placeholder:text-stone-400 dark:placeholder:text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-400 dark:focus:ring-stone-600 focus:border-transparent transition-shadow shadow-sm"
+          required
+        ></textarea>
+      </div>
+      <button
+        type="submit"
+        id="submitBtn"
+        class="w-full rounded-2xl bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 py-3.5 text-sm font-medium hover:bg-stone-800 dark:hover:bg-stone-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+      >
+        <span id="submitText">Ask anonymously</span>
+        <span id="submitSpinner" class="hidden">Thinking<span class="dot-pulse">.</span><span class="dot-pulse">.</span><span class="dot-pulse">.</span></span>
+      </button>
+    </form>
+
+    <!-- Answer -->
+    <div id="answerContainer" class="hidden mt-8 fade-in">
+      <div class="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5 sm:p-6 shadow-sm">
+        <div class="flex items-center gap-2 mb-4 text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Response
+        </div>
+        <div id="answerText" class="text-sm sm:text-base leading-relaxed text-stone-700 dark:text-stone-300 whitespace-pre-wrap"></div>
+      </div>
+      <div class="mt-4 text-center">
+        <button
+          id="askAgainBtn"
+          class="text-xs text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-400 underline underline-offset-2 transition-colors"
+        >
+          Ask something else
+        </button>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div id="errorContainer" class="hidden mt-8 fade-in">
+      <div class="rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/50 p-5">
+        <p class="text-sm text-red-700 dark:text-red-400 leading-relaxed" id="errorText"></p>
+      </div>
+      <div class="mt-4 text-center">
+        <button
+          id="retryBtn"
+          class="text-xs text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-400 underline underline-offset-2 transition-colors"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
+
+    <!-- Safety notice -->
+    <p class="mt-8 text-[11px] text-center text-stone-400 dark:text-stone-600 leading-relaxed max-w-sm mx-auto">
+      This is not therapy, medical advice, or a substitute for professional help.
+      If you're in crisis, please reach out to a trusted person or helpline in your country.
+    </p>
+  </main>
+
+  <!-- Footer -->
+  <footer class="pb-6 text-center text-[11px] text-stone-400 dark:text-stone-600">
+    Nothing is stored. No accounts. No tracking. Your words disappear the moment you leave.
+  </footer>
+
+  <script>
+    const SYSTEM_PROMPT = `You are a kind, thoughtful, and completely non-judgmental listener. Someone has come to you with something they cannot say anywhere else — a fear, a shame, a question, a secret.
+
+Your job is not to fix them. It is to:
+
+1. Let them feel heard. Acknowledge the weight of what they're sharing.
+2. Give a grounded, specific, compassionate response. If there's a real answer, give it honestly. If the answer is uncertain, say so clearly.
+3. Never minimize their concern. Never be dismissive. Never be vague or platitudinous.
+4. If the situation involves harm, offer concrete resources (helplines, professionals) calmly and without alarm.
+
+You write in short, natural paragraphs. You sound like a wise friend, not a textbook. You never ask for personal information. You never recommend a specific product or brand. You never break character.`;
+
+    // ─── State ──────────────────────────────────────────────────
+    const form = document.getElementById('askForm');
+    const questionInput = document.getElementById('questionInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const submitSpinner = document.getElementById('submitSpinner');
+    const answerContainer = document.getElementById('answerContainer');
+    const answerText = document.getElementById('answerText');
+    const askAgainBtn = document.getElementById('askAgainBtn');
+    const errorContainer = document.getElementById('errorContainer');
+    const errorText = document.getElementById('errorText');
+    const retryBtn = document.getElementById('retryBtn');
+    const themeToggle = document.getElementById('themeToggle');
+
+    let lastQuestion = '';
+
+    // ─── Theme ──────────────────────────────────────────────────
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark');
+    }
+
+    themeToggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+
+    // ─── Helpers ────────────────────────────────────────────────
+    function setLoading(loading) {
+      submitBtn.disabled = loading;
+      submitText.classList.toggle('hidden', loading);
+      submitSpinner.classList.toggle('hidden', !loading);
+    }
+
+    function showError(msg) {
+      errorText.textContent = msg;
+      errorContainer.classList.remove('hidden');
+      answerContainer.classList.add('hidden');
+      errorContainer.classList.add('fade-in');
+      setTimeout(() => errorContainer.classList.remove('fade-in'), 500);
+    }
+
+    function showAnswer(text) {
+      answerText.textContent = text;
+      answerContainer.classList.remove('hidden');
+      errorContainer.classList.add('hidden');
+      answerContainer.classList.add('fade-in');
+      setTimeout(() => answerContainer.classList.remove('fade-in'), 500);
+      answerContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function resetForm() {
+      answerContainer.classList.add('hidden');
+      errorContainer.classList.add('hidden');
+      questionInput.value = '';
+      questionInput.focus();
+    }
+
+    // ─── API call ───────────────────────────────────────────────
+    async function ask(question) {
+      if (!window._OPENAI_KEY || window._OPENAI_KEY === 'sk-proj-...') {
+        throw new Error('API key not configured. Create config.js (see config.example.js).');
+      }
+
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window._OPENAI_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'user', content: question }
+          ],
+          max_tokens: 600,
+          temperature: 0.7
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `Request failed (${res.status})`);
+      }
+
+      const data = await res.json();
+      return data.choices[0].message.content.trim();
+    }
+
+    // ─── Form submit ────────────────────────────────────────────
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const question = questionInput.value.trim();
+      if (!question) return;
+
+      lastQuestion = question;
+      setLoading(true);
+      errorContainer.classList.add('hidden');
+      answerContainer.classList.add('hidden');
+
+      try {
+        const response = await ask(question);
+        showAnswer(response);
+      } catch (err) {
+        const msg = err.message || 'Something went wrong. Please try again.';
+        if (msg.includes('API key')) {
+          showError('Unsaid is not yet configured. The creator needs to add an API key.');
+        } else if (msg.includes('Insufficient quota') || msg.includes('rate limit')) {
+          showError('Unsaid is resting. Please wait a moment and try again.');
+        } else {
+          showError('Something went wrong. Please try again.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // ─── Ask again ──────────────────────────────────────────────
+    askAgainBtn.addEventListener('click', resetForm);
+    retryBtn.addEventListener('click', () => {
+      errorContainer.classList.add('hidden');
+      questionInput.value = lastQuestion;
+    });
+
+    // ─── Auto-resize textarea ───────────────────────────────────
+    questionInput.addEventListener('input', () => {
+      questionInput.style.height = 'auto';
+      questionInput.style.height = Math.min(questionInput.scrollHeight, 240) + 'px';
+    });
+
+    // ─── Keyboard shortcut ──────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        form.requestSubmit();
+      }
+    });
+  </script>
+</body>
+</html>
