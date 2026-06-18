@@ -1,10 +1,5 @@
-export async function onRequest(context) {
+export async function onRequestPost(context) {
   const { request, env } = context;
-
-  if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
-
   const apiKey = env.OPENAI_API_KEY;
   if (!apiKey) {
     return new Response(JSON.stringify({ error: 'OPENAI_API_KEY not configured in Cloudflare Pages environment' }), {
