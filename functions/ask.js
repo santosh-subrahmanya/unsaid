@@ -44,7 +44,7 @@ export async function onRequest(context) {
   }
 
   try {
-    const result = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+    const result = await env.AI.run('@cf/meta/llama-3.2-3b-instruct', {
       messages: [
         { role: 'system', content: systemPrompt || SYSTEM_PROMPT },
         { role: 'user', content: question }
