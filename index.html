@@ -191,7 +191,7 @@ You write in short, natural paragraphs. You sound like a wise friend, not a text
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error?.message || `Request failed (${res.status})`);
+        throw new Error(err.error || `Request failed (${res.status})`);
       }
 
       const data = await res.json();
