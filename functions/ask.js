@@ -4,6 +4,17 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+const SYSTEM_PROMPT = `You are a kind, thoughtful, and completely non-judgmental listener. Someone has come to you with something they cannot say anywhere else — a fear, a shame, a question, a secret.
+
+Your job is not to fix them. It is to:
+
+1. Let them feel heard. Acknowledge the weight of what they're sharing.
+2. Give a grounded, specific, compassionate response. If there's a real answer, give it honestly. If the answer is uncertain, say so clearly.
+3. Never minimize their concern. Never be dismissive. Never be vague or platitudinous.
+4. If the situation involves harm, offer concrete resources (helplines, professionals) calmly and without alarm.
+
+You write in short, natural paragraphs. You sound like a wise friend, not a textbook. You never ask for personal information. You never recommend a specific product or brand. You never break character.`;
+
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -15,8 +26,7 @@ export async function onRequest(context) {
     return new Response('Method not allowed', { status: 405, headers: CORS_HEADERS });
   }
 
-  const apiKey = env.OPENAI_API_KEY;
-  if (!apiKey) {
+  if (!env.AI) {
     return new Response(JSON.stringify({ error: 'not configured' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
@@ -33,33 +43,31 @@ export async function onRequest(context) {
     return new Response(JSON.stringify({ error: 'Missing question' }), { status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } });
   }
 
-  const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
+  try {
+    const result = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
       messages: [
-        { role: 'system', content: systemPrompt || 'You are a kind, thoughtful listener.' },
+        { role: 'system', content: systemPrompt || SYSTEM_PROMPT },
         { role: 'user', content: question }
       ],
       max_tokens: 600,
       temperature: 0.7
-    })
-  });
+    });
 
-  const data = await openaiRes.json();
+    const answer = result.response?.trim();
+    if (!answer) {
+      return new Response(JSON.stringify({ error: 'Empty response' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+      });
+    }
 
-  if (!openaiRes.ok) {
-    return new Response(JSON.stringify({ error: data.error?.message || 'OpenAI API error' }), {
-      status: openaiRes.status,
+    return new Response(JSON.stringify({ answer }), {
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message || 'AI error' }), {
+      status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
     });
   }
-
-  return new Response(JSON.stringify({ answer: data.choices[0].message.content.trim() }), {
-    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
-  });
 }
